@@ -86,6 +86,6 @@ student_hub:
   msal_client_id: "2b7a3439-67d5-4cb0-b8d1-a244078196e3"
   # Supabase project shared with course-review. verify-session must be
   # deployed there (see supabase/functions/verify-session/README.md).
-  verify_session_url: "https://hojlmrrgkqvchqyggmbb.supabase.co/functions/v1/verify-session"
+  verify_session_url: "https://adwtxgeoppbanxqqfmik.supabase.co/functions/v1/verify-session"
 
 exclude: [changelog.md, LICENSE.txt, README.md, Gemfile, Gemfile.lock, supabase]
