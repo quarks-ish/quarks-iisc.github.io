@@ -160,8 +160,13 @@ sitemap: false
     ["localhost", "127.0.0.1"].includes(window.location.hostname) &&
     new URLSearchParams(window.location.search).has("preview"){% endif %};
 
+  const alerts = window.StudentHubAlert;
+  // True when this page load follows a sign-in attempt from the navbar.
+  const loginAttempted = alerts.takeLoginPending();
+
   let auth = null;
   let student = null; // set only when Supabase confirms an IISc account
+  let failure = null; // popup text when the sign-in did not work
 
   if (PREVIEW) {
     student = { name: "Preview Student", email: "preview@iisc.ac.in" };
@@ -179,19 +184,25 @@ sitemap: false
         if (result.authorized) {
           student = result.user;
         } else {
+          failure = "That account is not an IISc account. Please sign in with your @iisc.ac.in email.";
           // Signed in, but not an IISc account. Forget that session so the
           // next navbar click offers the account picker again.
           await auth.signOut();
         }
+      } else if (loginAttempted) {
+        failure = "Microsoft sign-in did not complete. Please try again.";
       }
     } catch (err) {
       // MSAL failed to load, or Supabase was unreachable: fail closed.
       console.error("Student Hub: sign-in check failed", err);
+      failure = "We could not verify your sign-in right now. Please try again later.";
     }
   }
 
   if (!student) {
     // STEP 3 (REDIRECT): not signed in, not IISc, or the check failed.
+    // The popup is shown on the home page after the redirect.
+    if (failure) alerts.flash("error", "Sign-in failed", failure);
     // replace() keeps this page out of history, so Back doesn't bounce here.
     window.location.replace(HOME);
   } else {
@@ -200,12 +211,20 @@ sitemap: false
     document.getElementById("hub-status").hidden = true;
     document.getElementById("hub-content").hidden = false;
 
+    if (loginAttempted && !PREVIEW) {
+      alerts.show("success", "Signed in", `Welcome, ${student.name || student.email}!`);
+    }
+
     document.getElementById("hub-signout").addEventListener("click", async () => {
       try {
         if (auth) await auth.signOut();
-      } finally {
-        window.location.replace(HOME);
+      } catch (err) {
+        console.error("Student Hub: sign-out failed", err);
+        alerts.show("error", "Sign-out failed", "We could not sign you out. Please try again.");
+        return; // stay on the hub: the user is still signed in
       }
+      alerts.flash("success", "Signed out", "You have been signed out of the Student Hub.");
+      window.location.replace(HOME);
     });
   }
 </script>
