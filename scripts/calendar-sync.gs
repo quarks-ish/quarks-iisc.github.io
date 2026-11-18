@@ -18,7 +18,7 @@
  *     sheet -> "Sync now" any time.)
  *
  * COLUMNS (matched by header name, any order, case-insensitive)
- *   Title        required ("Announcement Title" also works). Cleared / "TBD" = no event.
+ *   Title        required ("Announcement Title" also works). Cleared = delete the event.
  *   Date         required (or "Deadline", as in the announcements sheet: that
  *                makes an all-day event titled "Deadline: <Title>").
  *   Start Time   optional ("Time" also works). Blank = all-day event.
@@ -119,8 +119,8 @@ function run_() {
     var title = String(row[c.title] || '').trim();
     var ev = id ? getEvent_(cal, id) : null;
 
-    // Cleared or placeholder title ("TBD", "--") -> no event; remove one if it exists.
-    if (!title || /^(tbd|-+)$/i.test(title)) {
+    // Cleared title -> no event; remove one if it exists.
+    if (!title) {
       if (ev) ev.deleteEvent();
       ids.push(['']);
       return;
