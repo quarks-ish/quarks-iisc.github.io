@@ -97,4 +97,4 @@ calendar_cid: "OTlmMmYwODkyODJhYmU3Y2E4ODgyMmNmNDY5YjM1NmExZjM5OGExOGVjZjk3N2FmN
 calendar_tz: "Asia/Kolkata"
 # Public, referrer-restricted Google API key with the Calendar API enabled (safe to commit).
 # Leave blank to show sample events for previewing the layout.
-calendar_api_key: ""
+calendar_api_key: "AIzaSyD319ImR9sa6WCELaAo7q1wIxXdgrdnGgU"
