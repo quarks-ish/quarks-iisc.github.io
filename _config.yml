@@ -90,11 +90,7 @@ student_hub:
 
 exclude: [changelog.md, LICENSE.txt, README.md, Gemfile, Gemfile.lock, supabase]
 
-# Shared clubs Google Calendar (must be set to "Make available to public").
 calendar_id: "99f2f089282abe7ca88822cf469b356a1f398a18ecf977af4d0aeed68d4f6e67@group.calendar.google.com"
-# base64 of the ID: what Google's "add calendar" link (calendar.google.com/calendar/u/0?cid=...) expects.
 calendar_cid: "OTlmMmYwODkyODJhYmU3Y2E4ODgyMmNmNDY5YjM1NmExZjM5OGExOGVjZjk3N2FmNGQwYWVlZDY4ZDRmNmU2N0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t"
 calendar_tz: "Asia/Kolkata"
-# Public, referrer-restricted Google API key with the Calendar API enabled (safe to commit).
-# Leave blank to show sample events for previewing the layout.
 calendar_api_key: "AIzaSyD319ImR9sa6WCELaAo7q1wIxXdgrdnGgU"
