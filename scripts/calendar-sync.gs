@@ -18,14 +18,14 @@
  *     sheet -> "Sync now" any time.)
  *
  * COLUMNS (matched by header name, any order, case-insensitive)
- *   Title        required. Cleared Title = delete the event.
+ *   Title        required ("Announcement Title" also works). Cleared / "TBD" = no event.
  *   Date         required (or "Deadline", as in the announcements sheet: that
  *                makes an all-day event titled "Deadline: <Title>").
- *   Start Time   optional. Blank = all-day event.
+ *   Start Time   optional ("Time" also works). Blank = all-day event.
  *   End Time     optional. Blank = one hour after Start Time.
  *   End Date     optional. Blank = same as Date (use it for multi-day events).
- *   Location     optional.
- *   Category     optional. The club name. Shown on the website as a coloured
+ *   Location     optional ("Venue" also works).
+ *   Category     optional ("Club name" also works). The club name. Shown on the website as a coloured
  *                tag: the event title becomes "[Category] Title".
  *   Link         optional. Added to the event description.
  *   Description  optional.
@@ -33,7 +33,7 @@
 
 var CONFIG = {
   CALENDAR_ID: 'PASTE_CALENDAR_ID_HERE@group.calendar.google.com',
-  SHEET_NAME: 'Sheet1',
+  SHEET_NAME: '', // leave blank to use the first tab (form-response tabs have odd names)
   DEFAULT_DURATION_MIN: 60
 };
 
@@ -52,10 +52,9 @@ function installTrigger() {
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (t.getHandlerFunction() === 'syncAll') ScriptApp.deleteTrigger(t);
   });
-  ScriptApp.newTrigger('syncAll')
-    .forSpreadsheet(SpreadsheetApp.getActive())
-    .onChange()
-    .create();
+  var ss = SpreadsheetApp.getActive();
+  ScriptApp.newTrigger('syncAll').forSpreadsheet(ss).onChange().create();
+  ScriptApp.newTrigger('syncAll').forSpreadsheet(ss).onFormSubmit().create();
 }
 
 function syncAll() {
@@ -71,8 +70,7 @@ function syncAll() {
 
 function run_() {
   var ss = SpreadsheetApp.getActive();
-  var sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
-  if (!sheet) throw new Error('No sheet named "' + CONFIG.SHEET_NAME + '"');
+  var sheet = (CONFIG.SHEET_NAME && ss.getSheetByName(CONFIG.SHEET_NAME)) || ss.getSheets()[0];
   var cal = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);
   if (!cal) throw new Error('Calendar not found / no access: ' + CONFIG.CALENDAR_ID);
 
@@ -82,7 +80,16 @@ function run_() {
   var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function (h) {
     return String(h).trim().toLowerCase();
   });
-  var col = function (name) { return headers.indexOf(name.toLowerCase()); };
+  // First matching header wins, so the same script works for the form-response
+  // sheet ("Announcement Title", "Club name", "Venue", ...) and plain sheets.
+  var col = function (names) {
+    names = [].concat(names);
+    for (var i = 0; i < names.length; i++) {
+      var k = headers.indexOf(names[i].toLowerCase());
+      if (k >= 0) return k;
+    }
+    return -1;
+  };
 
   // Create the ID column the first time.
   var idCol = col(ID_HEADER);
@@ -94,12 +101,14 @@ function run_() {
   }
 
   var c = {
-    title: col('Title'), date: col('Date') >= 0 ? col('Date') : col('Deadline'),
-    isDeadline: col('Date') < 0,
-    start: col('Start Time'), end: col('End Time'), endDate: col('End Date'),
-    loc: col('Location'), cat: col('Category'), link: col('Link'), desc: col('Description')
+    title: col(['Title', 'Announcement Title']),
+    date: col(['Date', 'Event Date', 'Deadline']),
+    isDeadline: col(['Date', 'Event Date']) < 0,
+    start: col(['Start Time', 'Time']), end: col('End Time'), endDate: col('End Date'),
+    loc: col(['Location', 'Venue']), cat: col(['Category', 'Club name', 'Club']),
+    link: col('Link'), desc: col('Description')
   };
-  if (c.title < 0 || c.date < 0) throw new Error('Sheet needs "Title" and "Date" (or "Deadline") columns');
+  if (c.title < 0 || c.date < 0) throw new Error('Sheet needs a title column ("Title"/"Announcement Title") and a date column ("Date"/"Deadline")');
 
   var tz = ss.getSpreadsheetTimeZone();
   var values = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
@@ -110,8 +119,8 @@ function run_() {
     var title = String(row[c.title] || '').trim();
     var ev = id ? getEvent_(cal, id) : null;
 
-    // Cleared title (or lost event) -> remove / recreate as appropriate.
-    if (!title) {
+    // Cleared or placeholder title ("TBD", "--") -> no event; remove one if it exists.
+    if (!title || /^(tbd|-+)$/i.test(title)) {
       if (ev) ev.deleteEvent();
       ids.push(['']);
       return;
@@ -131,6 +140,7 @@ function run_() {
     var fullTitle = cat ? '[' + cat + '] ' + title : title;
     var loc = c.loc >= 0 ? String(row[c.loc] || '').trim() : '';
     var link = c.link >= 0 ? String(row[c.link] || '').trim() : '';
+    if (!/^https?:\/\//i.test(link)) link = ''; // ignore notes typed into the Link box
     var desc = c.desc >= 0 ? String(row[c.desc] || '').trim() : '';
     var body = [desc, link ? 'More info: ' + link : ''].filter(String).join('\n\n');
     var opts = { location: loc, description: body };
