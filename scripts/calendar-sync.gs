@@ -44,6 +44,7 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('Calendar')
     .addItem('Sync now', 'syncAll')
+    .addItem('Rebuild all events', 'rebuildAll')
     .addToUi();
 }
 
@@ -68,9 +69,42 @@ function syncAll() {
   }
 }
 
+/**
+ * Fixes a broken link between rows and events (e.g. an event was deleted by hand
+ * in Google Calendar): deletes every event this sheet created, clears the ID
+ * column, then creates everything fresh.
+ */
+function rebuildAll() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) return;
+  try {
+    var sheet = getSheet_();
+    var cal = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);
+    var lastCol = sheet.getLastColumn(), lastRow = sheet.getLastRow();
+    var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function (h) { return String(h).trim().toLowerCase(); });
+    var idCol = headers.indexOf(ID_HEADER.toLowerCase());
+    if (idCol >= 0 && lastRow >= 2) {
+      var range = sheet.getRange(2, idCol + 1, lastRow - 1, 1);
+      range.getValues().forEach(function (r) {
+        var ev = r[0] ? getEvent_(cal, String(r[0])) : null;
+        if (ev) { try { ev.deleteEvent(); } catch (e) {} }
+      });
+      range.clearContent();
+    }
+    run_();
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function getSheet_() {
+  var ss = SpreadsheetApp.getActive();
+  return (CONFIG.SHEET_NAME && ss.getSheetByName(CONFIG.SHEET_NAME)) || ss.getSheets()[0];
+}
+
 function run_() {
   var ss = SpreadsheetApp.getActive();
-  var sheet = (CONFIG.SHEET_NAME && ss.getSheetByName(CONFIG.SHEET_NAME)) || ss.getSheets()[0];
+  var sheet = getSheet_();
   var cal = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);
   if (!cal) throw new Error('Calendar not found / no access: ' + CONFIG.CALENDAR_ID);
 
