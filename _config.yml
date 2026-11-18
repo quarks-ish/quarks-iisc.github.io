@@ -89,3 +89,12 @@ student_hub:
   verify_session_url: "https://adwtxgeoppbanxqqfmik.supabase.co/functions/v1/verify-session"
 
 exclude: [changelog.md, LICENSE.txt, README.md, Gemfile, Gemfile.lock, supabase]
+
+# Shared clubs Google Calendar (must be set to "Make available to public").
+# TEMP: this is Google's public Indian-holidays calendar, used only to preview the layout.
+# Replace with the real Quarks/clubs calendar ID before merging.
+calendar_id: "en.indian#holiday@group.v.calendar.google.com"
+calendar_tz: "Asia/Kolkata"
+# Public, referrer-restricted Google API key with the Calendar API enabled (safe to commit).
+# Leave blank to show sample events for previewing the layout.
+calendar_api_key: ""
