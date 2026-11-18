@@ -90,14 +90,12 @@
     var $ = function (id) { return document.getElementById(id); };
     function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
     function key(d) { return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
-    var PALETTE = ['#c0392b','#2980b9','#27ae60','#8e44ad','#d35400','#16a085','#c2185b','#5d4037','#455a64','#7b1fa2','#00796b','#b7950b'];
-    var colorOf = {}, nextColor = 0;
-    function colorFor(k) { if (!(k in colorOf)) colorOf[k] = PALETTE[nextColor++ % PALETTE.length]; return colorOf[k]; }
+    function hue(s) { var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360; return 'hsl(' + h + ',55%,42%)'; }
 
     function parse(e) {
       var allDay = !!e.start.date, st = new Date(e.start.dateTime || e.start.date + 'T00:00:00');
       var t = e.summary || '(untitled)', m = t.match(/^\[(.+?)\]\s*(.*)$/);
-      return { title: m ? m[2] : t, club: m ? m[1] : '', color: colorFor((e.id || '') + t + (e.start.dateTime || e.start.date)),
+      return { title: m ? m[2] : t, club: m ? m[1] : '', color: m ? hue(m[1]) : 'var(--text-muted)',
                start: st, allDay: allDay, loc: e.location || '', link: e.htmlLink };
     }
     function when(ev) {
