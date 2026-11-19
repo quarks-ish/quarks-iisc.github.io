@@ -64,6 +64,22 @@ sitemap: false
       </article>
     </div>
 
+    <section class="hub-collapsible-section my-4">
+      <div class="hub-card">
+        <div class="d-flex align-items-center mb-3">
+         <i class="fas fa-list-ul hub-card-icon mr-2" aria-hidden="true"></i>
+         <h3 class="m-0">Student Directory & Resources</h3>
+       </div>
+    
+        <!-- Loading spinner -->
+       <div id="csv-loading" class="text-muted py-3">
+          <span class="spinner-border spinner-border-sm mr-2" role="status"></span> Loading data...
+        </div>
+        <!-- Container where the collapsible items will render -->
+        <div id="csv-collapsible-list" hidden></div>
+      </div>
+    </section>
+
     {% include hub-calendar.html %}
   </div>
 </section>
@@ -152,6 +168,64 @@ sitemap: false
     color: #e0e0e0;
     border-color: #777;
   }
+    /* Collapsible items styling */
+  .hub-accordion-item {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+    background: #fff;
+    transition: border-color 0.2s ease;
+  }
+
+  .hub-accordion-item summary {
+    padding: 0.85rem 1.25rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    list-style: none; /* removes default arrow in modern browsers */
+  }
+
+  .hub-accordion-item summary::-webkit-details-marker {
+    display: none; /* removes default arrow in Safari/Chrome */
+  }
+
+  .hub-accordion-item summary::after {
+    content: '\f078'; /* FontAwesome chevron-down */
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    font-size: 0.85rem;
+    transition: transform 0.2s ease;
+  }
+
+  .hub-accordion-item[open] summary::after {
+    transform: rotate(180deg);
+  }
+
+  .hub-accordion-content {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    font-size: 0.95rem;
+    color: #495057;
+  }
+
+  /* Dark mode compatibility */
+  .dark-mode .hub-accordion-item {
+    background: #252525;
+    border-color: #383838;
+  }
+
+  .dark-mode .hub-accordion-item summary {
+    color: #f8f9fa;
+  }
+
+  .dark-mode .hub-accordion-content {
+    border-top-color: #383838;
+    color: #cccccc;
+  }
 </style>
 
 <script type="module">
@@ -169,6 +243,67 @@ sitemap: false
   let auth = null;
   let student = null; // set only when Supabase confirms an IISc account
   let failure = null; // popup text when the sign-in did not work
+
+  // Lightweight CSV parser handling commas, quotes, and newlines
+  function parseCSV(text) {
+    const lines = text.trim().split(/\r?\n/);
+    if (lines.length < 2) return [];
+    
+    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+    return lines.slice(1).map(line => {
+      // Regex matches comma-separated values while respecting quotes
+      const regex = /(?:,|\n|^)("(?:(?:"")*[^"]*)*"|[^",\n]*|(?:\n|$))/g;
+      const values = [];
+      let match;
+      while ((match = regex.exec(line)) && values.length < headers.length) {
+        let val = match[1] || '';
+        if (val.startsWith('"') && val.endsWith('"')) {
+          val = val.slice(1, -1).replace(/""/g, '"');
+        }
+        values.push(val.trim());
+      }
+      const row = {};
+      headers.forEach((h, i) => { row[h] = values[i] || ''; });
+      return row;
+    });
+  }
+
+  async function loadCollapsibleCSV() {
+    const loadingEl = document.getElementById("csv-loading");
+    const listEl = document.getElementById("csv-collapsible-list");
+
+    try {
+      // Path to your CSV or Google Sheet CSV export URL:
+      const csvUrl = '{{ "/assets/data/Club-List-Sheet1.csv" | prepend: site.baseurl }}';
+      
+      const res = await fetch(csvUrl);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      const rows = parseCSV(text);
+
+      if (rows.length === 0) {
+        listEl.innerHTML = '<p class="text-muted">No entries found.</p>';
+      } else {
+        listEl.innerHTML = rows.map(row => `
+          <details class="hub-accordion-item">
+            <summary>
+              <span>${row.Title || row.Category || 'Item'}</span>
+            </summary>
+            <div class="hub-accordion-content">
+              <p class="mb-1">${row.Details || row.Description || ''}</p>
+              ${row.Link ? `<a href="${row.Link}" target="_blank" rel="noopener" class="hub-link">Learn more &rarr;</a>` : ''}
+            </div>
+          </details>
+        `).join('');
+      }
+
+      loadingEl.hidden = true;
+      listEl.hidden = false;
+    } catch (err) {
+      console.error("Failed to load CSV data:", err);
+      loadingEl.textContent = "Unable to load data at this time.";
+    }
+  }
 
   if (PREVIEW) {
     student = { name: "Preview Student", email: "preview@iisc.ac.in" };
@@ -212,6 +347,7 @@ sitemap: false
     document.getElementById("hub-user-email").textContent = student.name ? `(${student.email})` : "";
     document.getElementById("hub-status").hidden = true;
     document.getElementById("hub-content").hidden = false;
+    loadCollapsibleCSV();
 
     if (loginAttempted && !PREVIEW) {
       alerts.show("success", "Signed in", `Welcome, ${student.name || student.email}!`);
