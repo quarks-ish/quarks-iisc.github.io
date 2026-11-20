@@ -68,7 +68,7 @@ sitemap: false
       <div class="hub-card">
         <div class="d-flex align-items-center mb-3">
          <i class="fas fa-list-ul hub-card-icon mr-2" aria-hidden="true"></i>
-         <h3 class="m-0">Student Directory & Resources</h3>
+         <h3 class="m-0">Club List</h3>
        </div>
     
         <!-- Loading spinner -->
@@ -286,6 +286,16 @@ sitemap: false
       } else {
         listEl.innerHTML = rows.map(row => {
           const isClaimed = (row.Claimed || '').trim().toLowerCase() === 'yes';
+          const locations = (row.PostLocation || '')
+            .split(';')
+            .map(url => url.trim())
+            .filter(Boolean);
+          const hasLocation = locations.length > 0;
+          const isMissingLocation = !isClaimed && !hasLocation;
+          //Gives error in the console if link for unclaimed club is missing
+          if (isMissingLocation) {
+            console.warn(`[Student Hub] Missing posting location for unclaimed club: ${row.Title}`);
+          }
           // Choose icon and color based on Yes / No
           const symbol = isClaimed
             ? `<i class="fas fa-check-circle text-success ml-2 mr-auto" title="Claimed"></i>`
@@ -298,6 +308,16 @@ sitemap: false
               </summary>
               <div class="hub-accordion-content">
                 <p class="mb-1">${row.Description || ''}</p>
+                <p class="mb-1">Announcements</p>
+                ${hasLocation 
+                  ? locations.map((url, index) => `
+                      <p class="mb-1">
+                        ${locations.length > 1 ? `#${index + 1}` : ''}: 
+                        <a href="${url}" target="_blank" rel="noopener" class="hub-link">${url} &rarr;</a>
+                      </p>
+                    `).join('')
+                  : (isClaimed ? '' : '<p class="mb-1 text-muted">Location Not Yet Provided</p>')
+                }
                 ${row.Link ? `<a href="${row.Link}" target="_blank" rel="noopener" class="hub-link">Learn more &rarr;</a>` : ''}
               </div>
             </details>

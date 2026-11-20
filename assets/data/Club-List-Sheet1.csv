@@ -1,5 +1,5 @@
-Title,Description,Link,Claimed
-Astrae,Astronomy,/clubs/vicharaka,Yes
-Ensemble,Physics,/clubs/ensemble,Yes
-Samasya,Maths,/clubs/samasya,No 
-Vicharaka,Drone,/clubs/vicharaka,Yes
+Title,Description,Link,Claimed,PostLocation
+Astrae,Astronomy,/clubs/vicharaka,Yes,https://www.google.com
+Ensemble,Physics,/clubs/ensemble,Yes,
+Samasya,Maths,/clubs/samasya,No ,https://www.google.com;https://www.google.com
+Vicharaka,Drone,/clubs/vicharaka,Yes,https://www.google.com
