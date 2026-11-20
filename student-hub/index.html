@@ -244,7 +244,7 @@ sitemap: false
   let student = null; // set only when Supabase confirms an IISc account
   let failure = null; // popup text when the sign-in did not work
 
-  // Lightweight CSV parser handling commas, quotes, and newlines
+  //CSV parser handling commas, quotes, and newlines
   function parseCSV(text) {
     const lines = text.trim().split(/\r?\n/);
     if (lines.length < 2) return [];
@@ -284,17 +284,25 @@ sitemap: false
       if (rows.length === 0) {
         listEl.innerHTML = '<p class="text-muted">No entries found.</p>';
       } else {
-        listEl.innerHTML = rows.map(row => `
-          <details class="hub-accordion-item">
-            <summary>
-              <span>${row.Title || row.Category || 'Item'}</span>
-            </summary>
-            <div class="hub-accordion-content">
-              <p class="mb-1">${row.Details || row.Description || ''}</p>
-              ${row.Link ? `<a href="${row.Link}" target="_blank" rel="noopener" class="hub-link">Learn more &rarr;</a>` : ''}
-            </div>
-          </details>
-        `).join('');
+        listEl.innerHTML = rows.map(row => {
+          const isClaimed = (row.Claimed || '').trim().toLowerCase() === 'yes';
+          // Choose icon and color based on Yes / No
+          const symbol = isClaimed
+            ? `<i class="fas fa-check-circle text-success ml-2 mr-auto" title="Claimed"></i>`
+            : `<i class="fas fa-minus-circle text-secondary ml-2 mr-auto" title="Unclaimed"></i>`;
+          return `
+            <details class="hub-accordion-item">
+              <summary>
+                <span>${row.Title || 'Item'}</span>
+                ${symbol}
+              </summary>
+              <div class="hub-accordion-content">
+                <p class="mb-1">${row.Description || ''}</p>
+                ${row.Link ? `<a href="${row.Link}" target="_blank" rel="noopener" class="hub-link">Learn more &rarr;</a>` : ''}
+              </div>
+            </details>
+            `;
+        }).join('');
       }
 
       loadingEl.hidden = true;
