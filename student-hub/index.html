@@ -44,21 +44,24 @@ sitemap: false
 
     {% include hub-calendar.html %}
 
-    <section class="hub-collapsible-section my-4">
-      <div class="hub-card">
-        <div class="d-flex align-items-center mb-3">
-         <i class="fas fa-list-ul hub-card-icon mr-2" aria-hidden="true"></i>
-         <h3 class="m-0">Club List</h3>
-       </div>
-    
-        <!-- Loading spinner -->
-       <div id="csv-loading" class="text-muted py-3">
-          <span class="spinner-border spinner-border-sm mr-2" role="status"></span> Loading data...
-        </div>
-        <!-- Container where the collapsible items will render -->
-        <div id="csv-collapsible-list" hidden></div>
-      </div>
-    </section>
+     <section class="hub-collapsible-section my-4">
+       <details class="hub-card hub-card-collapsible">
+          <summary>
+            <div class="d-flex align-items-center">
+              <i class="fas fa-list-ul hub-card-icon mr-2" aria-hidden="true"></i>
+              <h3 class="m-0">Club List</h3>
+            </div>
+          </summary>
+          <div class="mt-3">
+            <!-- Loading spinner -->
+            <div id="csv-loading" class="text-muted py-3">
+              <span class="spinner-border spinner-border-sm mr-2" role="status"></span> Loading data...
+            </div>
+            <!-- Container where the collapsible items will render -->
+            <div id="csv-collapsible-list" hidden></div>
+          </div>
+        </details>
+      </section>
 
     <div class="hub-grid">
       <article class="hub-card">
@@ -178,7 +181,28 @@ sitemap: false
     background: #fff;
     transition: border-color 0.2s ease;
   }
-
+  /* Main card collapsible header & arrow */
+  .hub-card-collapsible summary {
+    cursor: pointer;
+    outline: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    list-style: none; /* removes browser default triangle */
+  }
+  .hub-card-collapsible summary::-webkit-details-marker {
+    display: none; /* Safari/Chrome default marker removal */
+  }
+  .hub-card-collapsible summary::after {
+    content: '\f078'; /* Font Awesome chevron-down */
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    font-size: 1rem;
+    transition: transform 0.2s ease;
+  }
+  .hub-card-collapsible[open] summary::after {
+    transform: rotate(180deg); /* flips chevron up when open */
+  }
   .hub-accordion-item summary {
     padding: 0.85rem 1.25rem;
     font-weight: 600;
@@ -314,7 +338,7 @@ sitemap: false
                 ${hasLocation 
                   ? locations.map((url, index) => `
                       <p class="mb-1">
-                        ${locations.length > 1 ? `#${index + 1}` : ''}: 
+                        ${locations.length > 1 ? `#${index + 1}:` : ''}
                         <a href="${url}" target="_blank" rel="noopener" class="hub-link">${url} &rarr;</a>
                       </p>
                     `).join('')
@@ -329,6 +353,18 @@ sitemap: false
 
       loadingEl.hidden = true;
       listEl.hidden = false;
+
+      // Close all individual club dropdowns whenever the main Club List card is closed
+      const mainCard = document.querySelector('.hub-card-collapsible');
+      if (mainCard) {
+        mainCard.addEventListener('toggle', () => {
+          if (!mainCard.open) {
+            mainCard.querySelectorAll('.hub-accordion-item').forEach(item => {
+              item.open = false;
+            });
+          }
+        });
+      }
     } catch (err) {
       console.error("Failed to load CSV data:", err);
       loadingEl.textContent = "Unable to load data at this time.";
