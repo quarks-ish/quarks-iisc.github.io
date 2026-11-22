@@ -42,6 +42,24 @@ sitemap: false
       </button>
     </div>
 
+    {% include hub-calendar.html %}
+
+    <section class="hub-collapsible-section my-4">
+      <div class="hub-card">
+        <div class="d-flex align-items-center mb-3">
+         <i class="fas fa-list-ul hub-card-icon mr-2" aria-hidden="true"></i>
+         <h3 class="m-0">Club List</h3>
+       </div>
+    
+        <!-- Loading spinner -->
+       <div id="csv-loading" class="text-muted py-3">
+          <span class="spinner-border spinner-border-sm mr-2" role="status"></span> Loading data...
+        </div>
+        <!-- Container where the collapsible items will render -->
+        <div id="csv-collapsible-list" hidden></div>
+      </div>
+    </section>
+
     <div class="hub-grid">
       <article class="hub-card">
         <i class="fas fa-utensils hub-card-icon" aria-hidden="true"></i>
@@ -63,24 +81,6 @@ sitemap: false
         </a>
       </article>
     </div>
-
-    {% include hub-calendar.html %}
-
-    <section class="hub-collapsible-section my-4">
-      <div class="hub-card">
-        <div class="d-flex align-items-center mb-3">
-         <i class="fas fa-list-ul hub-card-icon mr-2" aria-hidden="true"></i>
-         <h3 class="m-0">Club List</h3>
-       </div>
-    
-        <!-- Loading spinner -->
-       <div id="csv-loading" class="text-muted py-3">
-          <span class="spinner-border spinner-border-sm mr-2" role="status"></span> Loading data...
-        </div>
-        <!-- Container where the collapsible items will render -->
-        <div id="csv-collapsible-list" hidden></div>
-      </div>
-    </section>
 
   </div>
 </section>
